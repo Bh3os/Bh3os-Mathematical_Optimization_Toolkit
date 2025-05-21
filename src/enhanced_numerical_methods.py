@@ -29,23 +29,26 @@ def plot_2d_function(f, x_range, x_min=None, mode='minimize', return_fig=False):
     
     # Plot the function
     ax.plot(x, y, label="f(x)", linewidth=2.5)
-    
-    # Mark the optimal point if provided
+      # Mark the optimal point if provided
     if x_min is not None:
         try:
             # Ensure x_min is a scalar
             if isinstance(x_min, (list, np.ndarray)):
                 x_min = x_min[0]
             
+            f_val = f(x_min)
+            
             point_label = "Minimum" if mode == 'minimize' else "Maximum"
-            ax.plot(x_min, f(x_min), 'ro', markersize=8, label=f"{point_label}: x={x_min:.4f}")
+            ax.plot(x_min, f_val, 'ro', markersize=8, label=f"{point_label}: x={x_min:.4f}")
             
             # Add vertical line from x-axis to the optimal point
-            ax.vlines(x=x_min, ymin=min(y), ymax=f(x_min), linestyles='dashed', colors='red', alpha=0.7)
+            ax.vlines(x=x_min, ymin=min(y), ymax=f_val, linestyles='dashed', colors='red', alpha=0.7)
             
             # Add annotation with function value
-            ax.annotate(f'f({x_min:.4f}) = {f(x_min):.4f}', 
-                     xy=(x_min, f(x_min)),
+            # Convert f_val to float explicitly to avoid formatting issues with numpy arrays
+            f_val_float = float(f_val) if isinstance(f_val, np.ndarray) else f_val
+            ax.annotate(f'f({x_min:.4f}) = {f_val_float:.4f}', 
+                     xy=(x_min, f_val),
                      xytext=(10, -30), 
                      textcoords='offset points',
                      arrowprops=dict(arrowstyle='->'))
@@ -576,13 +579,20 @@ def create_symbolic_functions(expr_str, var_symbols):
         # Convert to numerical functions
         f = sp.lambdify(var_symbols, expr, 'numpy')
         grad_f = sp.lambdify(var_symbols, grad_expr, 'numpy')
-        hess_f = sp.lambdify(var_symbols, hess_expr, 'numpy')
-        
-        # Wrap functions to handle array inputs
+        hess_f = sp.lambdify(var_symbols, hess_expr, 'numpy')        # Wrap functions to handle array inputs
         def f_wrapper(x):
             if isinstance(x, np.ndarray):
                 if x.ndim == 1:
-                    return f(*x)
+                    # Handle both single variable and multivariable cases
+                    if len(var_symbols) == 1:
+                        # For single variable function with array input (vectorized)
+                        if len(x) > 1:  # If it's an array of multiple values
+                            return np.array([f(float(xi)) for xi in x])
+                        else:  # Single element array
+                            return f(float(x[0]))
+                    else:
+                        # For multivariable function
+                        return f(*x)
                 else:
                     return f(x[0], x[1])  # For 2D arrays like meshgrid
             return f(x)
@@ -660,25 +670,25 @@ def optimize_single_variable(expr_str, mode='minimize', x0=None, method='newton'
             x_opt, path = steepest_descent(f, grad_f, x0, lr=0.1, max_iter=100, path_history=True)
     else:  # gradient descent
         x_opt, path = steepest_descent(f, grad_f, x0, lr=0.1, max_iter=100, path_history=True)
-    
-    # Get function value (using original function for maximization)
+      # Get function value (using original function for maximization)
     if mode == 'maximize':
-        f_opt = orig_f(x_opt)
+        f_opt = float(orig_f(x_opt))
     else:
-        f_opt = f(x_opt)
+        f_opt = float(f(x_opt))
     
     # Determine appropriate plotting range
     if path:
         path_x = np.array([p[0] for p in path])
         x_range = (min(path_x) - 2, max(path_x) + 2)
     else:
-        x_range = (x_opt - 5, x_opt + 5)
+        x_range = (float(x_opt[0]) - 5, float(x_opt[0]) + 5)
     
     # For plotting, always use the original function
     plot_f = orig_f if mode == 'maximize' else f
     fig = plot_2d_function(plot_f, x_range, x_opt, mode=mode, return_fig=True)
     
-    return x_opt[0], f_opt, fig, path
+    # Return scalar value for x_opt instead of array for cleaner output
+    return float(x_opt[0]), f_opt, fig, path
 
 def optimize_multivariable(expr_str, mode='minimize', x0=None, method='newton'):
     """
