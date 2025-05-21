@@ -21,9 +21,9 @@ optimization_type = st.sidebar.selectbox(
     ["Single-variable Optimization", "Multivariable Optimization", "Constrained Optimization"]
 )
 
-# Use symbolic infinity for handling periodic functions
+# Advanced settings header
 st.sidebar.header("Advanced Settings")
-st.sidebar.info("For periodic functions, complete symbolic solutions will be used (e.g., π/2 + nπ for all integers n).")
+st.sidebar.info("This application handles periodic functions (like sine and cosine) by finding the optimal points within a practical range.")
 
 # Define symbolic infinity range for periodic functions - this will be used internally
 # We'll use a fixed range for performance reasons but wide enough to catch most patterns
@@ -93,21 +93,17 @@ if optimization_type == "Single-variable Optimization":
                 
                 # Use preserve_symbolic=True for periodic functions
                 result = single_variable_optimization(expr, mode=mode, int_range=int_range, preserve_symbolic=True)
-                
-                # Check if a symbolic solution was returned
+                  # Even if a symbolic solution was returned, only display the numeric result
                 if len(result) == 4:  # Contains symbolic solution
-                    best_point, best_val, fig, symbolic_desc = result
+                    best_point, best_val, fig, _ = result
                     
-                    # Display both symbolic and numeric solutions
+                    # Only display numeric solutions
                     st.success(f"Optimum point: x = {best_point:.4f}")
                     st.success(f"Optimum value: f(x) = {best_val:.4f}")
                     
-                    # Display the symbolic form
-                    st.markdown("### Symbolic Solution:")
-                    st.latex(symbolic_desc)
-                    
                     # Display the LaTeX expression
                     st.markdown(f"### Function: $f(x) = {expr}$")
+                    st.markdown(f"### {mode.capitalize()}d at $x = {best_point:.4f}$")
                     
                     # Display the figure if available
                     if fig:
@@ -161,18 +157,17 @@ elif optimization_type == "Multivariable Optimization":
             with st.spinner('Finding optimal point...'):
                 expr = sympify(expr_str)
                 result = multivariable_optimization(expr, mode=mode, int_range=int_range)
-                
-                # Check if a symbolic solution was returned
+                  # Even if a symbolic solution was returned, only display the numeric result
                 if isinstance(result, tuple) and len(result) == 4:  # Contains symbolic solution
-                    best_point, best_val, fig, symbolic_desc = result
+                    best_point, best_val, fig, _ = result
                     
-                    # Display both symbolic and numeric solutions
+                    # Only display numeric solutions
                     st.success(f"Optimum point: (x, y) = ({best_point[0]:.4f}, {best_point[1]:.4f})")
                     st.success(f"Optimum value: f(x, y) = {best_val:.4f}")
                     
-                    # Display the symbolic form
-                    st.markdown("### Symbolic Solution:")
-                    st.latex(symbolic_desc)
+                    # Display the LaTeX expression
+                    st.markdown(f"### Function: $f(x,y) = {expr}$")
+                    st.markdown(f"### {mode.capitalize()}d at $(x,y) = ({best_point[0]:.4f}, {best_point[1]:.4f})$")
                     
                     # Display the figure if available
                     if fig:
@@ -248,18 +243,18 @@ elif optimization_type == "Constrained Optimization":
                 obj_expr = sympify(expr_str)
                 const_expr = sympify(constraint_str)
                 result = constrained_optimization(obj_expr, const_expr, mode=mode, int_range=int_range)
-                
-                # Check if a symbolic solution was returned
+                  # Even if a symbolic solution was returned, only display the numeric result
                 if isinstance(result, tuple) and len(result) == 4:  # Contains symbolic solution
-                    opt_point, opt_val, fig, symbolic_desc = result
+                    opt_point, opt_val, fig, _ = result
                     
-                    # Display both symbolic and numeric solutions
+                    # Only display numeric solutions
                     st.success(f"Optimum point: (x, y) = ({opt_point[0]:.4f}, {opt_point[1]:.4f})")
                     st.success(f"Optimum value: f(x, y) = {opt_val:.4f}")
                     
-                    # Display the symbolic form
-                    st.markdown("### Symbolic Solution:")
-                    st.latex(symbolic_desc)
+                    # Display the LaTeX expressions
+                    st.markdown(f"### Objective: $f(x,y) = {obj_expr}$")
+                    st.markdown(f"### Constraint: $g(x,y) = {const_expr} = 0$")
+                    st.markdown(f"### {mode.capitalize()}d at $(x,y) = ({opt_point[0]:.4f}, {opt_point[1]:.4f})$")
                     
                     # Display the figure if available
                     if fig:
