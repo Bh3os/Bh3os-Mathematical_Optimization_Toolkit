@@ -593,7 +593,11 @@ def create_symbolic_functions(expr_str, var_symbols):
                     else:
                         # For multivariable function
                         return f(*x)
+                elif x.ndim == 2 and len(var_symbols) == 1:
+                    # Handle 2D arrays for single variable plots (like meshgrid output)
+                    return np.array([f(float(xi)) for xi in x.flatten()]).reshape(x.shape)
                 else:
+                    # For 2D arrays with multiple variables
                     return f(x[0], x[1])  # For 2D arrays like meshgrid
             return f(x)
         
