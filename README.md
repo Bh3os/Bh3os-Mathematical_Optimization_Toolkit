@@ -1,1 +1,1 @@
-# mathematical-optimization-toolkit-with-plots
+# Mathematical_Optimization_Toolkit
