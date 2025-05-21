@@ -1,0 +1,3 @@
+@echo off
+echo Starting Optimization Explorer...
+streamlit run app.py

@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 *.so
 .Python
+env/
 build/
 develop-eggs/
 dist/
@@ -15,45 +16,60 @@ lib64/
 parts/
 sdist/
 var/
-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 
-# Virtual Environment
+# Virtual environments
 venv/
 ENV/
 env/
-.env/
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
+.env
+.venv
 
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# Local development settings
-.env
-.env.local
-.env.*.local
-
 # Streamlit
 .streamlit/
 
-# Plot outputs and images
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.tif
-*.tiff
+# VS Code
+.vscode/
+.history/
+*.code-workspace
 
-# System Files
+# PyCharm
+.idea/
+*.iml
+
+# Operating System Files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+
+# Backup files
+backup/
+*.bak
+*.backup
+*~
 
 # Log files
 *.log
+
+# Cache directories
+.cache/
+.pytest_cache/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# Project specific
+.streamlit/secrets.toml

@@ -5,8 +5,8 @@ from sympy import sympify, SympifyError, pi, sqrt, oo
 from sympy.abc import x, y # Import x and y directly for easier use
 
 # Import optimization functions
-from src.enhanced_Analytical_Methods import single_variable_optimization, multivariable_optimization, constrained_optimization
-from src.enhanced_numerical_methods import optimize_single_variable, optimize_multivariable, optimize_constrained
+from modules.analytical_methods import single_variable_optimization, multivariable_optimization, constrained_optimization
+from modules.numerical_methods import optimize_single_variable, optimize_multivariable, optimize_constrained
 
 # Set page configuration
 st.set_page_config(page_title="Optimization Methods Explorer", layout="wide")
