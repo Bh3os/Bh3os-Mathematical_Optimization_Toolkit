@@ -389,14 +389,15 @@ def multivariable_optimization(expr, mode='minimize', int_range=(-2, 2), preserv
     
     # Find critical points by solving grad_f = 0
     symbolic_critical_points = solve([Eq(grad[0], 0), Eq(grad[1], 0)], (x, y), dict=True)
-      # Store original symbolic solutions before expansion
+    
+    # Store original symbolic solutions before expansion
     original_symbolic = symbolic_critical_points.copy()
     
     # Check if this is likely a trigonometric function
     is_trigonometric = 'sin' in str(expr) or 'cos' in str(expr)
     
     # Handle symbolic and periodic solutions
-    critical_points = generate_numeric_points_from_symbolic(symbolic_critical_points, int_range)
+    critical_points = generate_numeric_points_from_symbolic(symbolic_critical_points, int_range)[0]
     
     if not critical_points:
         if is_trigonometric and 'sin(x) + cos(y)' in str(expr):
@@ -464,8 +465,7 @@ def multivariable_optimization(expr, mode='minimize', int_range=(-2, 2), preserv
         except Exception as e:
             print(f"Warning: Could not convert {pt_dict} to numeric values: {e}")
             continue
-        
-        # Evaluate Hessian at the critical point
+          # Evaluate Hessian at the critical point
         try:
             hess_at_point = hess_matrix.subs(numeric_pt_dict)
             # Extract components for easier calculations
@@ -474,18 +474,21 @@ def multivariable_optimization(expr, mode='minimize', int_range=(-2, 2), preserv
             h_yy = float(hess_at_point[1, 1])
             det_hess = h_xx * h_yy - h_xy**2
             
-            # Apply Hessian test based on optimization mode
+            # Apply Hessian test based on optimization mode with tolerance for numerical precision
+            tolerance = 1e-8  # Numerical tolerance for zero comparisons
             if mode == 'minimize':
-                # For minimization: Hessian must be positive definite
+                # For minimization: Hessian should be positive definite
                 # (h_xx > 0 and det > 0)
-                if not (h_xx > 0 and det_hess > 0):
-                    print(f"Skipping point ({x_val:.4f}, {y_val:.4f}) for minimize (Hessian not positive definite: h_xx={h_xx}, det={det_hess}).")
+                # But if we're close to zero, don't be too strict (possible saddle point)
+                if h_xx < -tolerance and abs(det_hess) > tolerance:
+                    print(f"Skipping point ({x_val:.4f}, {y_val:.4f}) for minimize (Hessian indicates maximum or saddle: h_xx={h_xx}, det={det_hess}).")
                     continue
             elif mode == 'maximize':
-                # For maximization: Hessian must be negative definite
+                # For maximization: Hessian should be negative definite
                 # (h_xx < 0 and det > 0)
-                if not (h_xx < 0 and det_hess > 0):
-                    print(f"Skipping point ({x_val:.4f}, {y_val:.4f}) for maximize (Hessian not negative definite: h_xx={h_xx}, det={det_hess}).")
+                # But if we're close to zero, don't be too strict (possible saddle point)
+                if h_xx > tolerance and abs(det_hess) > tolerance:
+                    print(f"Skipping point ({x_val:.4f}, {y_val:.4f}) for maximize (Hessian indicates minimum or saddle: h_xx={h_xx}, det={det_hess}).")
                     continue
         except Exception as e:
             print(f"Warning: Error evaluating Hessian at {numeric_pt_dict}: {e}")

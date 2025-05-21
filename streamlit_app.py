@@ -3,8 +3,7 @@ from sympy import sympify, SympifyError, pi, sqrt
 from sympy.abc import x, y # Import x and y directly for easier use
 
 # Import the optimization functions from the module
-from enhanced_Analytical_Methods import single_variable_optimization, constrained_optimization
-from fixed_multivariable import fixed_multivariable_optimization as multivariable_optimization
+from enhanced_Analytical_Methods import single_variable_optimization, multivariable_optimization, constrained_optimization
 
 st.set_page_config(page_title="Optimization Methods Explorer", layout="wide")
 
@@ -21,10 +20,6 @@ optimization_type = st.sidebar.selectbox(
     "Select Method",
     ["Single-variable Optimization", "Multivariable Optimization", "Constrained Optimization"]
 )
-
-# Advanced settings header
-st.sidebar.header("Advanced Settings")
-st.sidebar.info("This application handles periodic functions (like sine and cosine) by finding the optimal points within a practical range.")
 
 # Define symbolic infinity range for periodic functions - this will be used internally
 # We'll use a fixed range for performance reasons but wide enough to catch most patterns
@@ -89,39 +84,23 @@ if optimization_type == "Single-variable Optimization":
         try:
             with st.spinner('Finding optimal point...'):
                 expr = sympify(expr_str)
-                # Check if it's a periodic function
-                is_periodic = any(func_name in expr_str for func_name in ['sin', 'cos', 'tan'])
+                best_point, best_val, fig = single_variable_optimization(expr, mode=mode, int_range=int_range)
+            
+            # Display results
+            if best_point is not None and best_val is not None:
+                st.success(f"Optimum point: x = {best_point:.4f}")
+                st.success(f"Optimum value: f(x) = {best_val:.4f}")
                 
-                # Use preserve_symbolic=True for periodic functions
-                result = single_variable_optimization(expr, mode=mode, int_range=int_range, preserve_symbolic=True)
-                  # Even if a symbolic solution was returned, only display the numeric result
-                if len(result) == 4:  # Contains symbolic solution
-                    best_point, best_val, fig, _ = result
-                    
-                    # Only display numeric solutions
-                    st.success(f"Optimum point: x = {best_point:.4f}")
-                    st.success(f"Optimum value: f(x) = {best_val:.4f}")
-                    
-                    # Display the LaTeX expression
-                    st.markdown(f"### Function: $f(x) = {expr}$")
-                    st.markdown(f"### {mode.capitalize()}d at $x = {best_point:.4f}$")
-                    
-                    # Display the figure if available
-                    if fig:
-                        st.pyplot(fig)
-                else:
-                    best_point, best_val, fig = result
-                    
-                    st.success(f"Optimum point: x = {best_point:.4f}")
-                    st.success(f"Optimum value: f(x) = {best_val:.4f}")
-                    
-                    # Display the LaTeX expression
-                    st.markdown(f"### Function: $f(x) = {expr}$")
-                    st.markdown(f"### {mode.capitalize()}d at $x = {best_point:.4f}$")
-                    
-                    # Display the figure
-                    st.pyplot(fig)
-                    
+                # Display the LaTeX expression
+                st.markdown(f"### Function: $f(x) = {expr}$")
+                st.markdown(f"### {mode.capitalize()}d at $x = {best_point:.4f}$")
+            else:
+                st.warning("Could not find a specific optimum point. See the plot for function behavior.")
+            
+            # Display the figure
+            if fig:
+                st.pyplot(fig)
+            
         except SympifyError:
             st.error("Invalid function expression. Please use valid SymPy syntax (e.g., x**2 + 3*x - 1).")
         except ValueError as e:
@@ -157,34 +136,22 @@ elif optimization_type == "Multivariable Optimization":
         try:
             with st.spinner('Finding optimal point...'):
                 expr = sympify(expr_str)
-                result = multivariable_optimization(expr, mode=mode, int_range=int_range)
-                  # Even if a symbolic solution was returned, only display the numeric result
-                if isinstance(result, tuple) and len(result) == 4:  # Contains symbolic solution
-                    best_point, best_val, fig, _ = result
-                    
-                    # Only display numeric solutions
-                    st.success(f"Optimum point: (x, y) = ({best_point[0]:.4f}, {best_point[1]:.4f})")
-                    st.success(f"Optimum value: f(x, y) = {best_val:.4f}")
-                    
-                    # Display the LaTeX expression
-                    st.markdown(f"### Function: $f(x,y) = {expr}$")
-                    st.markdown(f"### {mode.capitalize()}d at $(x,y) = ({best_point[0]:.4f}, {best_point[1]:.4f})$")
-                    
-                    # Display the figure if available
-                    if fig:
-                        st.pyplot(fig)
-                else:
-                    best_point, best_val, fig = result
-                    
-                    st.success(f"Optimum point: (x, y) = ({best_point[0]:.4f}, {best_point[1]:.4f})")
-                    st.success(f"Optimum value: f(x, y) = {best_val:.4f}")
-                    
-                    # Display the LaTeX expression
-                    st.markdown(f"### Function: $f(x,y) = {expr}$")
-                    st.markdown(f"### {mode.capitalize()}d at $(x,y) = ({best_point[0]:.4f}, {best_point[1]:.4f})$")
-                    
-                    # Display the figure
-                    st.pyplot(fig)
+                best_point, best_val, fig = multivariable_optimization(expr, mode=mode, int_range=int_range)
+            
+            # Display results
+            if best_point is not None and best_val is not None:
+                st.success(f"Optimum point: (x, y) = ({best_point[0]:.4f}, {best_point[1]:.4f})")
+                st.success(f"Optimum value: f(x, y) = {best_val:.4f}")
+                
+                # Display the LaTeX expression
+                st.markdown(f"### Function: $f(x,y) = {expr}$")
+                st.markdown(f"### {mode.capitalize()}d at $(x,y) = ({best_point[0]:.4f}, {best_point[1]:.4f})$")
+            else:
+                st.warning("Could not find a specific optimum point. See the plot for function behavior.")
+            
+            # Display the figure
+            if fig:
+                st.pyplot(fig)
             
         except SympifyError:
             st.error("Invalid function expression. Please use valid SymPy syntax (e.g., x**2 + y**2).")
@@ -243,34 +210,24 @@ elif optimization_type == "Constrained Optimization":
             with st.spinner('Finding optimal point with constraint...'):
                 obj_expr = sympify(expr_str)
                 const_expr = sympify(constraint_str)
-                result = constrained_optimization(obj_expr, const_expr, mode=mode, int_range=int_range)
-                  # Even if a symbolic solution was returned, only display the numeric result
-                if isinstance(result, tuple) and len(result) == 4:  # Contains symbolic solution
-                    opt_point, opt_val, fig, _ = result
-                    
-                    # Only display numeric solutions
-                    st.success(f"Optimum point: (x, y) = ({opt_point[0]:.4f}, {opt_point[1]:.4f})")
-                    st.success(f"Optimum value: f(x, y) = {opt_val:.4f}")
-                    
-                    # Display the LaTeX expressions
-                    st.markdown(f"### Objective: $f(x,y) = {obj_expr}$")
-                    st.markdown(f"### Constraint: $g(x,y) = {const_expr} = 0$")
-                    st.markdown(f"### {mode.capitalize()}d at $(x,y) = ({opt_point[0]:.4f}, {opt_point[1]:.4f})$")
-                    
-                    # Display the figure if available
-                    if fig:
-                        st.pyplot(fig)
-                else:
-                    opt_point, opt_val, fig = result
-                    
-                    st.success(f"Optimum point: (x, y) = ({opt_point[0]:.4f}, {opt_point[1]:.4f})")
-                    st.success(f"Optimum value: f(x, y) = {opt_val:.4f}")
-                    
-                    # Display the LaTeX expressions
-                    st.markdown(f"### Objective: $f(x,y) = {obj_expr}$")
-                    st.markdown(f"### Constraint: $g(x,y) = {const_expr} = 0$")
-                    st.markdown(f"### {mode.capitalize()}d at $(x,y) = ({opt_point[0]:.4f}, {opt_point[1]:.4f})$")
-                          # Display the figure
+                opt_point, opt_val, fig = constrained_optimization(obj_expr, const_expr, mode=mode, int_range=int_range)
+            
+            # Display results
+            if opt_point is not None and opt_val is not None:
+                st.success(f"Optimum point: (x, y) = ({opt_point[0]:.4f}, {opt_point[1]:.4f})")
+                st.success(f"Optimum value: f(x, y) = {opt_val:.4f}")
+                
+                # Display the LaTeX expressions
+                st.markdown(f"### Objective: $f(x,y) = {obj_expr}$")
+                st.markdown(f"### Constraint: $g(x,y) = {const_expr} = 0$")
+                st.markdown(f"### {mode.capitalize()}d at $(x,y) = ({opt_point[0]:.4f}, {opt_point[1]:.4f})$")
+            else:
+                st.warning("Could not find a specific optimum point that satisfies the constraints.")
+                st.markdown(f"### Objective: $f(x,y) = {obj_expr}$")
+                st.markdown(f"### Constraint: $g(x,y) = {const_expr} = 0$")
+            
+            # Display the figure
+            if fig:
                 st.pyplot(fig)
             
         except SympifyError as e:
@@ -279,39 +236,6 @@ elif optimization_type == "Constrained Optimization":
             st.error(f"Optimization Error: {e}")
         except Exception as e:
             st.error(f"An unexpected error occurred: {str(e)}")
-
-# Add numerical methods tab
-st.sidebar.markdown("---")
-st.sidebar.header("Numerical Methods")
-
-numerical_option = st.sidebar.checkbox("Enable Numerical Methods", value=False)
-
-if numerical_option:
-    st.header("Numerical Optimization Methods")
-    
-    # Show a message explaining numerical methods
-    st.info("""
-    **Numerical Methods** use iterative algorithms to approximate solutions, which is useful when:
-    - Exact solutions are difficult to find
-    - Functions have complex derivatives
-    - Problems involve constraints that are hard to handle analytically
-    
-    Select the "Numerical Methods" tab below to use gradient descent, Newton's method, and other numerical approaches.
-    """)
-    
-    numerical_tab = st.radio(
-        "Select Numerical Method",
-        ["Single-Variable Numerical", "Multivariable Numerical", "Constrained Numerical"]
-    )
-    
-    if numerical_tab == "Single-Variable Numerical":
-        st.subheader("Coming soon! Enable Numerical Methods in complete_streamlit_app.py")
-    
-    elif numerical_tab == "Multivariable Numerical":
-        st.subheader("Coming soon! Enable Numerical Methods in complete_streamlit_app.py")
-    
-    elif numerical_tab == "Constrained Numerical":
-        st.subheader("Coming soon! Enable Numerical Methods in complete_streamlit_app.py")
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### Instructions")
